@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sensors_plus/sensors_plus.dart';
+import 'package:geolocator/geolocator.dart';
 
 class MonitorPage extends StatefulWidget {
   const MonitorPage({Key? key}) : super(key: key);
@@ -9,13 +9,7 @@ class MonitorPage extends StatefulWidget {
 }
 
 class _MonitorPageState extends State<MonitorPage> {
-  UserAccelerometerEvent pastEvent = new UserAccelerometerEvent(0, 0, 0);
-
-  String state = "";
-
-  String state_v = "";
-
-  double sensitivity = 2;
+  double speedInMps = 0.0;
 
   @override
   void initState() {
@@ -26,45 +20,29 @@ class _MonitorPageState extends State<MonitorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Monitor Page"),
+        title: Text("Speed"),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           IconButton(
-            icon: Icon(
-              Icons.check,
-            ),
             onPressed: () {
-              userAccelerometerEvents.listen((UserAccelerometerEvent event) {
+              Geolocator.getPositionStream(
+                      forceAndroidLocationManager: true,
+                      intervalDuration: Duration(milliseconds: 10),
+                      distanceFilter: 2,
+                      desiredAccuracy: LocationAccuracy.best)
+                  .listen((position) {
                 setState(() {
-                  pastEvent = event;
-
-                  if (pastEvent.x > (0.1 * sensitivity)) {
-                    state = "Moving Right ";
-                  } else if (pastEvent.x < (-0.1 * sensitivity)) {
-                    state = "Moving Left ";
-                  } else {
-                    state = "";
-                  }
-
-                  if (pastEvent.y > (0.1 * sensitivity)) {
-                    state_v = "Moving Up ";
-                  } else if (pastEvent.y < (-0.1 * sensitivity)) {
-                    state_v = "Moving Down ";
-                  } else {
-                    state_v = "";
-                  }
+                  speedInMps = position.speed; // this is your speed
                 });
               });
             },
+            icon: Icon(Icons.check),
           ),
           Text(
-            "X: " +
-                pastEvent.x.toStringAsFixed(2) +
-                "\nY: " +
-                pastEvent.y.toStringAsFixed(2),
+            speedInMps.toStringAsPrecision(3),
           ),
-          Text(state + " " + state_v),
         ],
       ),
     );
